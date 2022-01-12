@@ -1,162 +1,127 @@
 #include <iostream>
-#include "sstream"
-#include "vector"
+#include <stdexcept>
+#include <vector>
 
 using namespace std;
 
-/**
- * 3, 3
- *
- * [1, 1, 1]
- * [1, 1, 1]
- * [1, 1, 1]
- */
 class Matrix {
+private:
+    int num_rows_;
+    int num_columns_;
+
+    vector<vector<int>> elements_;
+
 public:
-    vector<vector<int>> values;
-
     Matrix() {
-        rows = 0;
-        cols = 0;
+        num_rows_ = 0;
+        num_columns_ = 0;
     }
 
-    Matrix(int num_rows, int num_cols) {
-        if (num_rows < 0 || num_cols < 0) {
-            throw out_of_range("Incorrect range of nums and cols");
-        }
-
-        rows = num_rows;
-        cols = num_cols;
+    Matrix(int num_rows, int num_columns) {
+        Reset(num_rows, num_columns);
     }
 
-    void Reset(int num_rows, int num_cols) {
-        if (num_rows < 0 || num_cols < 0) {
-            throw out_of_range("Incorrect range of nums and cols");
+    void Reset(int num_rows, int num_columns) {
+        if (num_rows < 0) {
+            throw out_of_range("num_rows must be >= 0");
+        }
+        if (num_columns < 0) {
+            throw out_of_range("num_columns must be >= 0");
+        }
+        if (num_rows == 0 || num_columns == 0) {
+            num_rows = num_columns = 0;
         }
 
-        rows = num_rows;
-        cols = num_cols;
-
-        values.erase(values.begin(), values.end());
-        values.resize(rows);
+        num_rows_ = num_rows;
+        num_columns_ = num_columns;
+        elements_.assign(num_rows, vector<int>(num_columns));
     }
 
-    int At(int num_rows, int num_cols) const {
-        if (num_rows > rows || num_cols > cols) {
-            throw out_of_range("Incorrect range of nums and cols");
-        }
-
-        return 0;
+    int& At(int row, int column) {
+        return elements_.at(row).at(column);
     }
 
-    int *At(int num_rows, int num_cols) {
-        if (num_rows > rows || num_cols > cols) {
-            throw out_of_range("Incorrect range of nums and cols");
-        }
-
-        return nullptr;
+    int At(int row, int column) const {
+        return elements_.at(row).at(column);
     }
 
     int GetNumRows() const {
-        return rows;
+        return num_rows_;
     }
 
-    int GetNumCols() const {
-        return cols;
+    int GetNumColumns() const {
+        return num_columns_;
     }
-
-    void PrintValues() const {
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                cout << values[r][c] << " ";
-            }
-
-            cout << endl;
-        }
-    }
-
-private:
-    int rows;
-    int cols;
 };
 
-istream &operator>>(istream &stream, Matrix &matrix) {
-    int rows, cols;
-
-    stream >> rows >> cols;
-    matrix.Reset(rows, cols);
-
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
-            int value;
-            stream >> value;
-            matrix.values[r].push_back(value);
-        }
+bool operator==(const Matrix& one, const Matrix& two) {
+    if (one.GetNumRows() != two.GetNumRows()) {
+        return false;
     }
 
-    return stream;
-}
-
-ostream &operator<<(ostream &stream, Matrix &matrix) {
-    stream << matrix.GetNumRows() << " " << matrix.GetNumCols() << endl;
-
-    matrix.PrintValues();
-
-    return stream;
-}
-
-bool operator==(const Matrix &left, const Matrix &right) {
-    if (left.GetNumRows() != right.GetNumRows() && left.GetNumCols() != right.GetNumCols()) {
+    if (one.GetNumColumns() != two.GetNumColumns()) {
         return false;
+    }
+
+    for (int row = 0; row < one.GetNumRows(); ++row) {
+        for (int column = 0; column < one.GetNumColumns(); ++column) {
+            if (one.At(row, column) != two.At(row, column)) {
+                return false;
+            }
+        }
     }
 
     return true;
 }
 
-Matrix operator+(const Matrix &left, const Matrix &right) {
-    if (left.GetNumRows() != right.GetNumRows() && left.GetNumCols() != right.GetNumCols()) {
-        throw invalid_argument("Matrix must have equal size");
+Matrix operator+(const Matrix& one, const Matrix& two) {
+    if (one.GetNumRows() != two.GetNumRows()) {
+        throw invalid_argument("Mismatched number of rows");
     }
 
-    Matrix sum_result;
+    if (one.GetNumColumns() != two.GetNumColumns()) {
+        throw invalid_argument("Mismatched number of columns");
+    }
 
-    return sum_result;
+    Matrix result(one.GetNumRows(), one.GetNumColumns());
+    for (int row = 0; row < result.GetNumRows(); ++row) {
+        for (int column = 0; column < result.GetNumColumns(); ++column) {
+            result.At(row, column) = one.At(row, column) + two.At(row, column);
+        }
+    }
+
+    return result;
 }
 
-void RunCommand(stringstream &stream, const string& command) {
-    stream << command << endl;
+istream& operator>>(istream& in, Matrix& matrix) {
+    int num_rows, num_columns;
+    in >> num_rows >> num_columns;
+
+    matrix.Reset(num_rows, num_columns);
+    for (int row = 0; row < num_rows; ++row) {
+        for (int column = 0; column < num_columns; ++column) {
+            in >> matrix.At(row, column);
+        }
+    }
+
+    return in;
 }
 
-void ExecuteCommands(istream &stream) {
-    Matrix one;
-    Matrix two;
-    stream >> one;
-    stream >> two;
+ostream& operator<<(ostream& out, const Matrix& matrix) {
+    out << matrix.GetNumRows() << " " << matrix.GetNumColumns() << endl;
+    for (int row = 0; row < matrix.GetNumRows(); ++row) {
+        for (int column = 0; column < matrix.GetNumColumns(); ++column) {
+            if (column > 0) {
+                out << " ";
+            }
+            out << matrix.At(row, column);
+        }
+        out << endl;
+    }
 
-    cout << one << endl;
-    cout << two << endl;
+    return out;
 }
-
-void RunTest() {
-    stringstream stream;
-    RunCommand(stream, "3 5");
-    RunCommand(stream, "6 4 -1 9 8");
-    RunCommand(stream, "12 1 2 9 -5");
-    RunCommand(stream, "-4 0 12 8 6");
-    RunCommand(stream, "3 5");
-    RunCommand(stream, "5 1 0 -8 23");
-    RunCommand(stream, "14 5 -6 6 9");
-    RunCommand(stream, "8 0 5 4 1");
-
-    ExecuteCommands(stream);
-}
-
-void RunProduction() {
-    ExecuteCommands(cin);
-};
 
 int main() {
-    RunTest();
-
     return 0;
 }
