@@ -1,5 +1,6 @@
 #include <iostream>
 #include "sstream"
+#include "vector"
 
 using namespace std;
 
@@ -52,26 +53,53 @@ public:
         return cols;
     }
 
+    void PrintValues() {}
+
 private:
+    vector<vector<int>> values;
+
     int rows;
     int cols;
 };
+
+istream &operator>>(istream &stream, Matrix &matrix) {
+    int rows, cols;
+
+    stream >> rows >> cols;
+    matrix.Reset(rows, cols);
+
+    return stream;
+}
+
+ostream &operator<<(ostream &stream, Matrix &matrix) {
+    stream << matrix.GetNumRows() << " " << matrix.GetNumCols() << endl;
+
+    return stream;
+}
+
+bool operator==(const Matrix &left, const Matrix &right) {
+    return false;
+}
+
+Matrix operator+(const Matrix &left, const Matrix &right) {
+    if (left.GetNumCols() != right.GetNumCols() && left.GetNumRows() != right.GetNumRows()) {
+        throw invalid_argument("Matrix must have equal size");
+    }
+}
 
 void RunCommand(stringstream &stream, string command) {
     stream << command << endl;
 }
 
 void ExecuteCommands(istream &stream) {
-    string command_line;
-
-    while (getline(stream, command_line)) {
-        cout << command_line;
-    }
+    Matrix one;
+    stream >> one;
+    cout << one;
 }
 
 void RunTest() {
     stringstream stream;
-    RunCommand(stream, "TEST");
+    RunCommand(stream, "3 5");
 
     ExecuteCommands(stream);
 }
